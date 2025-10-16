@@ -106,10 +106,9 @@
       }
     }
 
-    async function updateBusLocation() {
-      try {
-        // const res = await fetch('http://localhost:5000/location');
-        const res = await fetch('https://bus-tracking-2-qxzb.onrender.com/location');
+   async function updateBusLocation() {
+    try {
+        const res = await fetch('https://bus-tracking-2-qxzb.onrender.com/location'); // ✅ await
         const data = await res.json();
         if (!busMarker) return;
 
@@ -118,18 +117,20 @@
 
         // Auto-pan every 10 seconds
         if (Date.now() - lastPanTime > 10000) {
-          map.panTo([data.lat, data.lng]);
-          lastPanTime = Date.now();
+            map.panTo([data.lat, data.lng]);
+            lastPanTime = Date.now();
         }
 
-      } catch (err) {
+    } catch (err) {
         console.error("Location update failed:", err);
-      }
     }
+}
+
 
     initMap();
   </script>
 </body>
 </html>
+
 
 
