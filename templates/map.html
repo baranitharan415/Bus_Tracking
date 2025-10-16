@@ -109,7 +109,7 @@
     async function updateBusLocation() {
       try {
         // const res = await fetch('http://localhost:5000/location');
-        const res = fetch('https://bus-tracking-2-qxzb.onrender.com/location')
+        const res = await fetch('https://bus-tracking-2-qxzb.onrender.com/location');
         const data = await res.json();
         if (!busMarker) return;
 
@@ -131,4 +131,5 @@
   </script>
 </body>
 </html>
+
 
