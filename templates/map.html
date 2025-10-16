@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🚌 Bus Tracking Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://rawcdn.githack.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #f9f9f9;
+    }
+    #map {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center; font-family:sans-serif; margin:10px;">🚌 Bus Live Location</h2>
+  <div id="map"></div>
+
+  <script>
+    let map;
+    let busMarker;
+    let lastPanTime = Date.now();
+
+    // Bearing calculation
+    function calculateBearing(lat1, lng1, lat2, lng2) {
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      lat1 = lat1 * Math.PI / 180;
+      lat2 = lat2 * Math.PI / 180;
+
+      const y = Math.sin(dLng) * Math.cos(lat2);
+      const x = Math.cos(lat1) * Math.sin(lat2) -
+                Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+      const brng = Math.atan2(y, x) * 180 / Math.PI;
+      return (brng + 360) % 360;
+    }
+
+    // Smooth bus movement with rotation
+    function smoothMove(marker, newLat, newLng, duration = 1500) {
+      const startLatLng = marker.getLatLng();
+      const startTime = Date.now();
+
+      // ✅ Corrected rotation offset for this icon (-90°)
+      const bearing = calculateBearing(startLatLng.lat, startLatLng.lng, newLat, newLng);
+      marker.setRotationAngle(bearing - 90);
+
+      function animate() {
+        const elapsed = Date.now() - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const lat = startLatLng.lat + (newLat - startLatLng.lat) * t;
+        const lng = startLatLng.lng + (newLng - startLatLng.lng) * t;
+        marker.setLatLng([lat, lng]);
+        if (t < 1) requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    async function initMap() {
+      try {
+        // const res = await fetch('http://localhost:5000/location');
+        const res = await fetch('https://f2e4dd9527bb.ngrok-free.app/location');
+        const data = await res.json();
+
+        // Initialize map
+        map = L.map('map').setView([data.lat, data.lng], 17);
+
+        // Google Maps tiles
+        // L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        //   maxZoom: 20,
+        //   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        //   attribution: '© Google Maps'
+        // }).addTo(map);
+
+          L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: '© Google Maps'
+  }).addTo(map);
+
+
+        // 🚌 Flaticon Bus Icon
+        const busIcon = L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1048/1048333.png',
+          iconSize: [45, 45],
+          iconAnchor: [22, 22],
+        });
+
+        busMarker = L.marker([data.lat, data.lng], { icon: busIcon, rotationAngle: 0 }).addTo(map);
+
+        // Start updating location every second
+        setInterval(updateBusLocation, 1000);
+
+      } catch (err) {
+        console.error("Map init failed:", err);
+      }
+    }
+
+    async function updateBusLocation() {
+      try {
+        // const res = await fetch('http://localhost:5000/location');
+        const res = fetch('https://f2e4dd9527bb.ngrok-free.app/location')
+        const data = await res.json();
+        if (!busMarker) return;
+
+        // Move bus + rotate to direction
+        smoothMove(busMarker, data.lat, data.lng);
+
+        // Auto-pan every 10 seconds
+        if (Date.now() - lastPanTime > 10000) {
+          map.panTo([data.lat, data.lng]);
+          lastPanTime = Date.now();
+        }
+
+      } catch (err) {
+        console.error("Location update failed:", err);
+      }
+    }
+
+    initMap();
+  </script>
+</body>
+</html>
