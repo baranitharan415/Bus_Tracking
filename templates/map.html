@@ -50,9 +50,8 @@
       const startLatLng = marker.getLatLng();
       const startTime = Date.now();
 
-      // ✅ Corrected rotation offset for this icon (-90°)
       const bearing = calculateBearing(startLatLng.lat, startLatLng.lng, newLat, newLng);
-      marker.setRotationAngle(bearing - 90);
+      marker.setRotationAngle(bearing); // ✅ top-down icon, no -90
 
       function animate() {
         const elapsed = Date.now() - startTime;
@@ -68,7 +67,6 @@
 
     async function initMap() {
       try {
-        // const res = await fetch('http://localhost:5000/location');
         const res = await fetch('https://bus-tracking-2-qxzb.onrender.com/location');
         const data = await res.json();
 
@@ -76,22 +74,15 @@
         map = L.map('map').setView([data.lat, data.lng], 17);
 
         // Google Maps tiles
-        // L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        //   maxZoom: 20,
-        //   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-        //   attribution: '© Google Maps'
-        // }).addTo(map);
+        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '© Google Maps'
+        }).addTo(map);
 
-          L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '© Google Maps'
-  }).addTo(map);
-
-
-        // 🚌 Flaticon Bus Icon
+        // 🚌 Top-down Bus Icon
         const busIcon = L.icon({
-          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1048/1048333.png',
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/1266/12668861.png', // top-down
           iconSize: [45, 45],
           iconAnchor: [22, 22],
         });
@@ -106,31 +97,25 @@
       }
     }
 
-   async function updateBusLocation() {
-    try {
-        const res = await fetch('https://bus-tracking-2-qxzb.onrender.com/location'); // ✅ await
+    async function updateBusLocation() {
+      try {
+        const res = await fetch('https://bus-tracking-2-qxzb.onrender.com/location');
         const data = await res.json();
         if (!busMarker) return;
 
-        // Move bus + rotate to direction
         smoothMove(busMarker, data.lat, data.lng);
 
-        // Auto-pan every 10 seconds
         if (Date.now() - lastPanTime > 10000) {
-            map.panTo([data.lat, data.lng]);
-            lastPanTime = Date.now();
+          map.panTo([data.lat, data.lng]);
+          lastPanTime = Date.now();
         }
 
-    } catch (err) {
+      } catch (err) {
         console.error("Location update failed:", err);
+      }
     }
-}
-
 
     initMap();
   </script>
 </body>
 </html>
-
-
-
