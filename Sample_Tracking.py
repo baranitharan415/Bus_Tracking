@@ -13,8 +13,9 @@ def index():
 
 @app.route('/update-location', methods=['POST'])
 def update_location():
-    lat = float(request.form['lat'])
-    lng = float(request.form['lng'])
+    data = request.get_json()
+    lat = float(data['lat'])
+    lng = float(data['lng'])
     latest_location['lat'] = lat
     latest_location['lng'] = lng
     print(f"Received: {lat}, {lng}")
@@ -29,4 +30,5 @@ def get_location():
 if __name__ == "__main__":
     # Render environment port setup
     port = int(os.environ.get("PORT", 5000))
+
     app.run(host="0.0.0.0", port=port)
